@@ -1,49 +1,47 @@
-var mapUrl = "https://www.google.com/maps/d/kml?forcekml=1&mid=";
+const mapUrl = "https://www.google.com/maps/d/kml?forcekml=1&mid=";
 
 
-function main() {
-    // Iterate over all maps
-    for (map of mapList) {
-        downloadMap(map.title, map.id);
-        Logger.log("X");
+function findOrCreateFile(parentDir, filename, content)
+{
+    var file;
+
+    // See if there's already a file in the indicated Google Drive folder
+    var backupFolder = DriveApp.getFolderById(parentDir);
+    var files = backupFolder.getFilesByName(filename);
+    if (files.hasNext())
+    {
+        file = files.next();
+        // Set the file contents
+        file.setContent(content);
+        Logger.log("Updated existing file: " + filename);
     }
+    else
+    {
+        // Create a new file with content
+        file = backupFolder.createFile(filename, content);
+        Logger.log("Created new file: " + filename);
+    }
+    return file;
 }
 
-
-function downloadMap(name, id) {
+function downloadMap(backupDir, mapId, mapName)
+{
     // Append Map ID to URL
-    var url = mapUrl + id;
+    var url = mapUrl + mapId;
 
     // Get the map file
     var response = UrlFetchApp.fetch(url);
-//    var response = UrlFetchApp.fetch(url, {
-//        headers: {
-//            Authorization: "Bearer " + ScriptApp.getOAuthToken()
-//        }
-//    });
     //Logger.log(response);
 
     // Save the map file in the indicated Google Drive folder
-    var file = findOrCreateFile(name, response.getBlob());
+    var file = findOrCreateFile(backupDir, mapName + ".kml", response.getContentText());
 }
 
-function findOrCreateFile(name, content) {
-    var filename = name + ".kml";
-    var file;
-
-    // See if there's already a map file in the indicated Google Drive folder
-    var backupFolder = DriveApp.getFolderById(backupDir);
-    var files = backupFolder.getFilesByName(filename);
-    if (files.hasNext()) {
-        Logger.log("Reset existing file: " + filename);
-        file = files.next();
-        file.setContent(content.getDataAsString());
-    }
-    else {
-        Logger.log("Created new file: " + filename);
-        // Set the file contents
-        file = backupFolder.createFile(content);
-        // Set the file name
-        file.setName(filename);
+function main()
+{
+    // Iterate over all maps
+    for (map of config.mapList)
+    {
+        downloadMap(config.backupDir, map.id, map.name);
     }
 }
